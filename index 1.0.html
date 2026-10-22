@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APTA — Interface db_pbd</title>
+<style>
+:root{--bg:#0f1115;--card:#181b22;--bd:#2a2f3a;--tx:#e8eaf0;--mut:#8b93a5;--ac:#d4af37;--ac2:#f0d57a;--ok:#2ecc71;--no:#e74c3c}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--tx)}
+header{padding:20px 24px 0}
+h1{margin:0;font-size:20px;letter-spacing:.5px}h1 span{color:var(--ac)}
+.sub{color:var(--mut);font-size:12px;margin-top:2px}
+main{padding:16px 24px 40px;max-width:1100px;margin:auto}
+.pills{display:flex;gap:8px;overflow-x:auto;padding:4px 0;scrollbar-width:thin}
+.pill{border:1px solid var(--bd);background:var(--card);color:var(--mut);padding:7px 16px;border-radius:999px;cursor:pointer;font-size:13px;white-space:nowrap;font-family:inherit}
+.pill:hover{color:var(--tx)}
+.pill.on{background:var(--ac);color:#111;border-color:var(--ac);font-weight:600}
+.pill.sm{padding:5px 12px;font-size:12px}
+.bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:14px 0}
+.bar .grow{flex:1}
+input,select{background:#0f1218;border:1px solid var(--bd);color:var(--tx);padding:9px 12px;border-radius:8px;font-size:14px;font-family:inherit;width:100%}
+input:focus,select:focus{outline:none;border-color:var(--ac)}
+.bar input{width:220px}
+.btn{background:var(--ac);color:#111;border:0;padding:9px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;font-family:inherit}
+.btn.g{background:transparent;color:var(--tx);border:1px solid var(--bd)}
+.btn.d{background:var(--no);color:#fff}
+.btn.s{padding:5px 10px;font-size:12px}
+.wrap{background:var(--card);border:1px solid var(--bd);border-radius:12px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--bd);white-space:nowrap}
+th{color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:#1d212a}
+.act{display:flex;gap:6px;justify-content:flex-end}
+.b{padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600}
+.b.y{background:#2ecc7122;color:var(--ok)}.b.n{background:#e74c3c22;color:var(--no)}.b.i{background:#d4af3722;color:var(--ac2)}
+.empty{text-align:center;color:var(--mut);padding:30px}
+.cnt{color:var(--mut);font-size:12px;margin-top:10px}
+.ov{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;padding:16px;z-index:9}
+.ov[hidden]{display:none}
+.md{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:22px;width:100%;max-width:420px}
+.md h3{margin:0 0 14px}
+.fld{margin-bottom:12px}.fld label{display:block;font-size:12px;color:var(--mut);margin-bottom:5px}
+.ft{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.err{color:var(--no);font-size:12px;margin-top:8px;min-height:14px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ac);color:#111;padding:10px 18px;border-radius:8px;font-weight:600;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:10}
+.toast.on{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <h1><span>APTA</span> · Interface db_pbd</h1>
+  <div class="sub">Satuan · Role · User · Vendor · Barang · Margin Penjualan</div>
+</header>
+<main>
+  <div class="pills" id="tabs"></div>
+  <div class="bar">
+    <input id="q" placeholder="Cari…">
+    <div class="pills" id="flt"></div>
+    <div class="grow"></div>
+    <button class="btn g" id="rst">Reset Data</button>
+    <button class="btn" id="add">+ Tambah</button>
+  </div>
+  <div class="wrap"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div>
+  <div class="cnt" id="cnt"></div>
+</main>
+
+<div class="ov" id="ov" hidden><div class="md" id="md"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const KEY='apta_db_v1';
+const now=()=>new Date().toISOString().slice(0,19).replace('T',' ');
+const rp=n=>'Rp '+Number(n).toLocaleString('id-ID')+' Juta';
+
+const SEED={
+ satuan:[{idsatuan:1,nama_satuan:'Unit',status:1},{idsatuan:2,nama_satuan:'Set Lengkap',status:1},{idsatuan:3,nama_satuan:'Paket',status:1}],
+ role:[{idrole:1,nama_role:'Direktur Utama'},{idrole:2,nama_role:'Manajer Gudang'},{idrole:3,nama_role:'Sales Executive'}],
+ user:[{iduser:1,username:'apta_dirut',password:'Aptasalim11',idrole:1},{iduser:2,username:'gudang_apta',password:'Aptasalim11',idrole:2},{iduser:3,username:'sales_apta_prestige',password:'Aptasalim11',idrole:3}],
+ vendor:[{idvendor:1,nama_vendor:'PT Eropa Prima Motor',badan_hukum:'P',status:'A'},{idvendor:2,nama_vendor:'CV Supercar Mandiri',badan_hukum:'C',status:'A'},{idvendor:3,nama_vendor:'UD Garasi Klasik',badan_hukum:'U',status:'N'}],
+ barang:[{idbarang:1,jenis:'S',nama:'Lamborghini Aventador',idsatuan:1,status:1,harga:15000},{idbarang:2,jenis:'B',nama:'Porsche 911 Carrera',idsatuan:1,status:1,harga:5200},{idbarang:3,jenis:'B',nama:'Ferrari 296 GTB',idsatuan:1,status:1,harga:12000}],
+ margin_penjualan:[10,20,30,40,50].map((p,i)=>({idmargin_penjualan:i+1,persen:p,status:p==30?1:0,iduser:1,created_at:'2026-10-20 08:00:00',updated_at:'2026-10-20 08:00:00'}))
+};
+let db;
+try{db=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!db)db=JSON.parse(JSON.stringify(SEED));
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}};
+
+const look=(t,pk,id,f)=>{const r=db[t].find(x=>x[pk]==id);return r?r[f]:'-'};
+const bdg=(on,a='Aktif',b='Nonaktif')=>`<span class="b ${on?'y':'n'}">${on?a:b}</span>`;
+const stSel=[[1,'Aktif'],[0,'Nonaktif']];
+const roleOpt=()=>db.role.map(r=>[r.idrole,r.nama_role]);
+const userOpt=()=>db.user.map(u=>[u.iduser,u.username]);
+const satOpt=()=>db.satuan.map(s=>[s.idsatuan,s.nama_satuan]);
+const BH={P:'PT',C:'CV',U:'UD/Perorangan'};
+
+const E={
+ satuan:{t:'Satuan',pk:'idsatuan',
+  f:[{k:'nama_satuan',l:'Nama Satuan',max:45,r:1},{k:'status',l:'Status',s:()=>stSel,n:1,d:1}],
+  c:[['ID',r=>r.idsatuan],['Nama Satuan',r=>r.nama_satuan],['Status',r=>bdg(r.status==1)]],
+  flt:['Status',r=>r.status==1?'Aktif':'Nonaktif'],dep:[['barang','idsatuan','Barang']]},
+ role:{t:'Role',pk:'idrole',
+  f:[{k:'nama_role',l:'Nama Role',max:100,r:1}],
+  c:[['ID',r=>r.idrole],['Nama Role',r=>r.nama_role]],dep:[['user','idrole','User']]},
+ user:{t:'User',pk:'iduser',
+  f:[{k:'username',l:'Username',max:45,r:1},{k:'password',l:'Password',pw:1,max:100},{k:'idrole',l:'Role',s:roleOpt,n:1,r:1}],
+  c:[['ID',r=>r.iduser],['Username',r=>r.username],['Role',r=>look('role','idrole',r.idrole,'nama_role')]],
+  flt:['Role',r=>look('role','idrole',r.idrole,'nama_role')],
+  dep:[['margin_penjualan','iduser','Margin Penjualan']],uniq:'username'},
+ vendor:{t:'Vendor',pk:'idvendor',
+  f:[{k:'nama_vendor',l:'Nama Vendor',max:100,r:1},{k:'badan_hukum',l:'Badan Hukum',s:()=>[['P','PT'],['C','CV'],['U','UD/Perorangan']],d:'P'},{k:'status',l:'Status',s:()=>[['A','Aktif'],['N','Nonaktif']],d:'A'}],
+  c:[['ID',r=>r.idvendor],['Nama Vendor',r=>r.nama_vendor],['Badan Hukum',r=>BH[r.badan_hukum]||r.badan_hukum],['Status',r=>bdg(r.status=='A')]],
+  flt:['Status',r=>r.status=='A'?'Aktif':'Nonaktif'],dep:[]},
+ barang:{t:'Barang',pk:'idbarang',
+  f:[{k:'nama',l:'Nama',max:45,r:1},{k:'jenis',l:'Jenis',s:()=>[['B','Baru'],['S','Bekas']],d:'B'},{k:'idsatuan',l:'Satuan',s:satOpt,n:1,r:1},{k:'harga',l:'Harga (juta rupiah)',num:1,r:1},{k:'status',l:'Status',s:()=>stSel,n:1,d:1}],
+  c:[['ID',r=>r.idbarang],['Nama',r=>r.nama],['Jenis',r=>r.jenis=='B'?'Baru':'Bekas'],['Satuan',r=>look('satuan','idsatuan',r.idsatuan,'nama_satuan')],['Harga',r=>rp(r.harga)],['Status',r=>bdg(r.status==1)]],
+  flt:['Status',r=>r.status==1?'Aktif':'Nonaktif'],dep:[]},
+ margin_penjualan:{t:'Margin Penjualan',pk:'idmargin_penjualan',
+  f:[{k:'persen',l:'Persen (%)',num:1,r:1,step:'any'},{k:'iduser',l:'User',s:userOpt,n:1,r:1},{k:'status',l:'Status',s:()=>stSel,n:1,d:0}],
+  c:[['ID',r=>r.idmargin_penjualan],['Persen',r=>r.persen+'%'],['Status',r=>bdg(r.status==1)],['User',r=>look('user','iduser',r.iduser,'username')],['Dibuat',r=>r.created_at],['Diubah',r=>r.updated_at]],
+  flt:['Status',r=>r.status==1?'Aktif':'Nonaktif'],dep:[],margin:1}
+};
+
+let cur='satuan',fv='Semua',editing=null;
+
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1800)}
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function renderTabs(){
+ $('#tabs').innerHTML=Object.keys(E).map(k=>`<button class="pill ${k==cur?'on':''}" data-t="${k}">${E[k].t}</button>`).join('');
+ $('#tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{cur=b.dataset.t;fv='Semua';$('#q').value='';render()});
+}
+function renderFlt(){
+ const e=E[cur];
+ if(!e.flt){$('#flt').innerHTML='';return}
+ const vals=['Semua',...new Set(db[cur].map(e.flt[1]))];
+ $('#flt').innerHTML=vals.map(v=>`<button class="pill sm ${v==fv?'on':''}" data-v="${esc(v)}">${esc(v)}</button>`).join('');
+ $('#flt').querySelectorAll('button').forEach(b=>b.onclick=()=>{fv=b.dataset.v;render()});
+}
+function render(){
+ const e=E[cur];
+ renderTabs();renderFlt();
+ const q=$('#q').value.toLowerCase();
+ let rows=db[cur].filter(r=>(fv=='Semua'||!e.flt||e.flt[1](r)==fv)&&(!q||e.c.some(c=>String(c[1](r)).replace(/<[^>]+>/g,'').toLowerCase().includes(q))));
+ $('#th').innerHTML='<tr>'+e.c.map(c=>`<th>${c[0]}</th>`).join('')+'<th></th></tr>';
+ $('#tb').innerHTML=rows.length?rows.map(r=>{
+  const id=r[e.pk];
+  return '<tr>'+e.c.map(c=>`<td>${c[0]=='Status'||c[0]=='Harga'?c[1](r):esc(c[1](r)).replace(/&lt;(\/?span[^&]*)&gt;/g,'<$1>')}</td>`).join('')+
+  `<td><div class="act">${e.margin&&r.status!=1?`<button class="btn g s" data-a="on" data-id="${id}">Aktifkan</button>`:''}<button class="btn g s" data-a="ed" data-id="${id}">Edit</button><button class="btn d s" data-a="del" data-id="${id}">Hapus</button></div></td></tr>`}).join('')
+  :`<tr><td class="empty" colspan="${e.c.length+1}">Tidak ada data</td></tr>`;
+ $('#cnt').textContent=rows.length+' dari '+db[cur].length+' data';
+ $('#tb').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  const id=+b.dataset.id,a=b.dataset.a;
+  if(a=='ed')openForm(id);else if(a=='del')openDel(id);else activate(id);
+ });
+}
+
+function activate(id){
+ db.margin_penjualan.forEach(m=>{m.status=m.idmargin_penjualan==id?1:0;m.updated_at=now()});
+ save();render();toast('Margin aktif diganti');
+}
+
+function openModal(h){$('#md').innerHTML=h;$('#ov').hidden=false}
+function closeModal(){$('#ov').hidden=true;editing=null}
+$('#ov').onclick=e=>{if(e.target.id=='ov')closeModal()};
+
+function openForm(id){
+ const e=E[cur];editing=id||null;
+ const row=id?db[cur].find(r=>r[e.pk]==id):{};
+ const fields=e.f.map(f=>{
+  let v=id?row[f.k]:(f.d!==undefined?f.d:'');
+  if(f.pw&&id)v='';
+  let inp;
+  if(f.s)inp=`<select id="f_${f.k}">${f.s().map(o=>`<option value="${esc(o[0])}" ${o[0]==v?'selected':''}>${esc(o[1])}</option>`).join('')}</select>`;
+  else inp=`<input id="f_${f.k}" type="${f.pw?'password':f.num?'number':'text'}" ${f.step?`step="${f.step}"`:''} ${f.max?`maxlength="${f.max}"`:''} value="${esc(v)}" ${f.pw&&id?'placeholder="Kosongkan jika tidak diubah"':''}>`;
+  return `<div class="fld"><label>${f.l}${f.r||(f.pw&&!id)?' *':''}</label>${inp}</div>`}).join('');
+ openModal(`<h3>${id?'Edit':'Tambah'} ${e.t}</h3>${fields}<div class="err" id="err"></div><div class="ft"><button class="btn g" id="cx">Batal</button><button class="btn" id="sv">Simpan</button></div>`);
+ $('#cx').onclick=closeModal;$('#sv').onclick=submit;
+}
+
+function submit(){
+ const e=E[cur],o={};
+ for(const f of e.f){
+  let v=$('#f_'+f.k).value.trim();
+  if(f.pw&&editing&&!v)continue;
+  if((f.r||(f.pw&&!editing))&&v===''){$('#err').textContent=f.l+' wajib diisi';return}
+  if(f.num){if(isNaN(+v)||+v<0){$('#err').textContent=f.l+' tidak valid';return}v=+v}
+  else if(f.n)v=+v;
+  o[f.k]=v;
+ }
+ if(e.uniq&&db[cur].some(r=>r[e.uniq].toLowerCase()==o[e.uniq].toLowerCase()&&r[e.pk]!=editing)){$('#err').textContent=e.uniq+' sudah dipakai';return}
+ if(editing){
+  const r=db[cur].find(x=>x[e.pk]==editing);Object.assign(r,o);
+  if(e.margin)r.updated_at=now();
+ }else{
+  o[e.pk]=db[cur].reduce((m,r)=>Math.max(m,r[e.pk]),0)+1;
+  if(e.margin){o.created_at=o.updated_at=now()}
+  db[cur].push(o);
+ }
+ if(e.margin&&o.status==1){const id=editing||o[e.pk];db.margin_penjualan.forEach(m=>{if(m.idmargin_penjualan!=id)m.status=0})}
+ save();closeModal();render();toast('Data tersimpan');
+}
+
+function openDel(id){
+ const e=E[cur];
+ const used=e.dep.find(d=>db[d[0]].some(r=>r[d[1]]==id));
+ if(used){
+  openModal(`<h3>Tidak dapat dihapus</h3><div>Data masih dipakai oleh tabel <b>${used[2]}</b>.</div><div class="ft"><button class="btn" id="cx">Tutup</button></div>`);
+  $('#cx').onclick=closeModal;return;
+ }
+ openModal(`<h3>Hapus ${e.t}?</h3><div>Data dengan ID <b>${id}</b> akan dihapus permanen.</div><div class="ft"><button class="btn g" id="cx">Batal</button><button class="btn d" id="ok">Hapus</button></div>`);
+ $('#cx').onclick=closeModal;
+ $('#ok').onclick=()=>{db[cur]=db[cur].filter(r=>r[e.pk]!=id);save();closeModal();render();toast('Data dihapus')};
+}
+
+$('#add').onclick=()=>openForm();
+$('#q').oninput=render;
+$('#rst').onclick=()=>{
+ openModal(`<h3>Reset Data?</h3><div>Semua data dikembalikan ke kondisi awal DML.</div><div class="ft"><button class="btn g" id="cx">Batal</button><button class="btn d" id="ok">Reset</button></div>`);
+ $('#cx').onclick=closeModal;
+ $('#ok').onclick=()=>{db=JSON.parse(JSON.stringify(SEED));save();closeModal();render();toast('Data direset')};
+};
+document.addEventListener('keydown',e=>{if(e.key=='Escape')closeModal()});
+render();
+</script>
+</body>
+</html>

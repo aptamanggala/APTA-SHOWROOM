@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APTA Showroom — Interface db_pbd</title>
+<style>
+:root{
+  --bg:#f3f6ff;--card:#ffffff;--bd:#e2e8f5;--tx:#1d2a46;--mut:#667394;
+  --ac:#2563eb;--ok:#15803d;--no:#dc2626;--shadow:0 6px 22px rgba(37,63,140,.08);
+}
+html{font-size:16px}
+@media (min-width:1024px){html{font-size:17px}}
+@media (min-width:1280px) and (orientation:landscape){html{font-size:19px}}
+@media (min-width:1700px){html{font-size:21px}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--tx);
+  background:linear-gradient(135deg,#eef3ff 0%,#fdf2fb 55%,#effcf6 100%);min-height:100vh}
+
+/* ---------- layout ---------- */
+.app{display:grid;grid-template-columns:17rem 1fr;min-height:100vh}
+.side{background:var(--card);border-right:1px solid var(--bd);padding:1.3rem 1rem;position:sticky;top:0;height:100vh;overflow-y:auto;
+  display:flex;flex-direction:column;gap:.4rem;box-shadow:var(--shadow)}
+.brand{display:flex;align-items:center;gap:.7rem;padding:.2rem .4rem 1rem}
+.logo{width:2.6rem;height:2.6rem;border-radius:.8rem;background:linear-gradient(135deg,#2563eb,#db2777);color:#fff;
+  display:grid;place-items:center;font-weight:800;font-size:1.3rem;flex:none}
+.brand b{display:block;font-size:1.05rem}
+.brand small{color:var(--mut);font-size:.72rem}
+.mlabel{font-size:.68rem;font-weight:700;letter-spacing:.12em;color:var(--mut);padding:.4rem .6rem}
+nav{display:flex;flex-direction:column;gap:.35rem}
+.nav{display:flex;align-items:center;gap:.75rem;width:100%;border:0;background:transparent;color:var(--tx);
+  padding:.7rem .8rem;border-radius:.8rem;cursor:pointer;font-family:inherit;text-align:left;font-size:1rem;transition:.15s}
+.nav:hover{background:color-mix(in srgb,var(--c) 10%,white)}
+.nav .dot{width:.7rem;height:.7rem;border-radius:50%;background:var(--c);flex:none}
+.nav .nm{flex:1;font-weight:600;line-height:1.15}
+.nav .nm small{display:block;font-weight:500;color:var(--mut);font-size:.68rem;font-family:ui-monospace,Consolas,monospace;margin-top:.15rem}
+.nav em{font-style:normal;font-size:.75rem;font-weight:700;background:color-mix(in srgb,var(--c) 14%,white);color:var(--c);
+  padding:.15rem .55rem;border-radius:999px}
+.nav.on{background:var(--c);color:#fff;box-shadow:0 6px 16px color-mix(in srgb,var(--c) 40%,transparent)}
+.nav.on .dot{background:#fff}
+.nav.on .nm small{color:#ffffffcc}
+.nav.on em{background:#ffffff33;color:#fff}
+.sfoot{margin-top:auto;font-size:.7rem;color:var(--mut);padding:.8rem .6rem 0;line-height:1.4}
+
+main{padding:1.6rem 2rem 3rem;min-width:0}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1rem}
+.top h2{margin:0;font-size:1.7rem;letter-spacing:-.01em}
+.vname{display:inline-block;margin-top:.35rem;font-family:ui-monospace,Consolas,monospace;font-size:.8rem;
+  background:color-mix(in srgb,var(--ac) 12%,white);color:var(--ac);padding:.2rem .65rem;border-radius:999px;font-weight:600}
+.cnt{color:var(--mut);font-size:.85rem}
+
+/* ---------- toolbar ---------- */
+.bar{display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;margin:1rem 0;background:var(--card);border:1px solid var(--bd);
+  padding:.8rem;border-radius:1rem;box-shadow:var(--shadow)}
+.bar .grow{flex:1}
+.pills{display:flex;gap:.45rem;flex-wrap:wrap}
+.pill{border:1px solid var(--bd);background:#fff;color:var(--mut);padding:.4rem .9rem;border-radius:999px;cursor:pointer;
+  font-size:.82rem;font-family:inherit;font-weight:600}
+.pill:hover{color:var(--tx);border-color:var(--ac)}
+.pill.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+input,select{background:#fff;border:1.5px solid var(--bd);color:var(--tx);padding:.6rem .8rem;border-radius:.7rem;
+  font-size:.95rem;font-family:inherit;width:100%}
+input:focus,select:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 18%,transparent)}
+.bar input{width:15rem}
+.btn{background:var(--ac);color:#fff;border:0;padding:.6rem 1.1rem;border-radius:.7rem;font-weight:700;cursor:pointer;
+  font-size:.9rem;font-family:inherit;box-shadow:0 4px 12px color-mix(in srgb,var(--ac) 30%,transparent)}
+.btn:hover{filter:brightness(1.07)}
+.btn.g{background:#fff;color:var(--tx);border:1.5px solid var(--bd);box-shadow:none}
+.btn.g:hover{border-color:var(--ac);color:var(--ac)}
+.btn.d{background:var(--no);box-shadow:0 4px 12px #dc262633}
+.btn.s{padding:.38rem .75rem;font-size:.8rem}
+
+/* ---------- table ---------- */
+.wrap{background:var(--card);border:1px solid var(--bd);border-radius:1rem;overflow-x:auto;box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;font-size:1rem}
+th,td{padding:.85rem 1.1rem;text-align:left;border-bottom:1px solid var(--bd);white-space:nowrap}
+th{color:#fff;background:var(--ac);font-size:.74rem;text-transform:uppercase;letter-spacing:.09em;font-weight:700;position:sticky;top:0}
+tbody tr:nth-child(even){background:#f8faff}
+tbody tr:hover{background:color-mix(in srgb,var(--ac) 8%,white)}
+tr:last-child td{border-bottom:0}
+.act{display:flex;gap:.4rem;justify-content:flex-end}
+.b{padding:.22rem .7rem;border-radius:999px;font-size:.75rem;font-weight:700}
+.b.y{background:#16a34a1f;color:var(--ok)}.b.n{background:#dc26261c;color:var(--no)}
+.empty{text-align:center;color:var(--mut);padding:2rem}
+
+/* ---------- modal ---------- */
+.ov{position:fixed;inset:0;background:rgba(29,42,70,.45);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:1rem;z-index:9}
+.ov[hidden]{display:none}
+.md{background:#fff;border-radius:1.1rem;padding:1.5rem;width:100%;max-width:27rem;box-shadow:0 20px 50px rgba(20,30,70,.3);
+  border-top:6px solid var(--ac)}
+.md h3{margin:0 0 1rem;font-size:1.2rem}
+.fld{margin-bottom:.9rem}
+.fld label{display:block;font-size:.8rem;color:var(--mut);margin-bottom:.35rem;font-weight:600}
+.ft{display:flex;gap:.6rem;justify-content:flex-end;margin-top:1.1rem}
+.err{color:var(--no);font-size:.82rem;margin-top:.5rem;min-height:1rem}
+.toast{position:fixed;bottom:1.3rem;left:50%;transform:translateX(-50%);background:var(--tx);color:#fff;padding:.7rem 1.2rem;
+  border-radius:.8rem;font-weight:600;font-size:.9rem;opacity:0;transition:.25s;pointer-events:none;z-index:10}
+.toast.on{opacity:1}
+
+/* ---------- layar kecil ---------- */
+@media (max-width:820px){
+  .app{grid-template-columns:1fr}
+  .side{position:static;height:auto;flex-direction:column;padding:1rem}
+  nav{flex-direction:row;overflow-x:auto;padding-bottom:.3rem}
+  .nav{width:auto;white-space:nowrap}
+  .sfoot{display:none}
+  main{padding:1rem}
+  .bar input{width:100%}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <div class="logo">A</div>
+      <div><b>APTA Showroom</b><small>Interface db_pbd</small></div>
+    </div>
+    <div class="mlabel">6 VIEW DATA MASTER</div>
+    <nav id="tabs"></nav>
+    <div class="sfoot">Data disimpan di browser (localStorage). Tombol Reset mengembalikan ke data awal DML.</div>
+  </aside>
+
+  <main>
+    <div class="top">
+      <div>
+        <h2 id="vt"></h2>
+        <span class="vname" id="vn"></span>
+      </div>
+      <div class="cnt" id="cnt"></div>
+    </div>
+    <div class="bar">
+      <input id="q" placeholder="Cari data…">
+      <div class="pills" id="flt"></div>
+      <div class="grow"></div>
+      <button class="btn g" id="rst">Reset Data</button>
+      <button class="btn" id="add">+ Tambah</button>
+    </div>
+    <div class="wrap"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div>
+  </main>
+</div>
+
+<div class="ov" id="ov" hidden><div class="md" id="md"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const KEY='apta_db_v1';
+const now=()=>new Date().toISOString().slice(0,19).replace('T',' ');
+const rp=n=>'Rp '+Number(n).toLocaleString('id-ID')+' Juta';
+
+const SEED={
+ satuan:[{idsatuan:1,nama_satuan:'Unit',status:1},{idsatuan:2,nama_satuan:'Set Lengkap',status:1},{idsatuan:3,nama_satuan:'Paket',status:1}],
+ role:[{idrole:1,nama_role:'Direktur Utama'},{idrole:2,nama_role:'Manajer Gudang'},{idrole:3,nama_role:'Sales Executive'}],
+ user:[{iduser:1,username:'apta_dirut',password:'Aptasalim11',idrole:1},{iduser:2,username:'gudang_apta',password:'Aptasalim11',idrole:2},{iduser:3,username:'sales_apta_prestige',password:'Aptasalim11',idrole:3}],
+ vendor:[{idvendor:1,nama_vendor:'PT Eropa Prima Motor',badan_hukum:'P',status:'A'},{idvendor:2,nama_vendor:'CV Supercar Mandiri',badan_hukum:'C',status:'A'},{idvendor:3,nama_vendor:'UD Garasi Klasik',badan_hukum:'U',status:'N'}],
+ barang:[{idbarang:1,jenis:'S',nama:'Lamborghini Aventador',idsatuan:1,status:1,harga:15000},{idbarang:2,jenis:'B',nama:'Porsche 911 Carrera',idsatuan:1,status:1,harga:5200},{idbarang:3,jenis:'B',nama:'Ferrari 296 GTB',idsatuan:1,status:1,harga:12000}],
+ margin_penjualan:[10,20,30,40,50].map((p,i)=>({idmargin_penjualan:i+1,persen:p,status:p==30?1:0,iduser:1,created_at:'2026-10-20 08:00:00',updated_at:'2026-10-20 08:00:00'}))
+};
+let db;
+try{db=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!db)db=JSON.parse(JSON.stringify(SEED));
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}};
+
+const look=(t,pk,id,f)=>{const r=db[t].find(x=>x[pk]==id);return r?r[f]:'-'};
+const bdg=(on,a='Aktif',b='Nonaktif')=>`<span class="b ${on?'y':'n'}">${on?a:b}</span>`;
+const stSel=[[1,'Aktif'],[0,'Nonaktif']];
+const roleOpt=()=>db.role.map(r=>[r.idrole,r.nama_role]);
+const userOpt=()=>db.user.map(u=>[u.iduser,u.username]);
+const satOpt=()=>db.satuan.map(s=>[s.idsatuan,s.nama_satuan]);
+const BH={P:'PT',C:'CV',U:'UD/Perorangan'};
+
+const E={
+ satuan:{t:'Satuan',col:'#2563eb',pk:'idsatuan',
+  f:[{k:'nama_satuan',l:'Nama Satuan',max:45,r:1},{k:'status',l:'Status',s:()=>stSel,n:1,d:1}],
+  c:[['ID',r=>r.idsatuan],['Nama Satuan',r=>r.nama_satuan],['Status',r=>bdg(r.status==1)]],
+  flt:['Status',r=>r.status==1?'Aktif':'Nonaktif'],dep:[['barang','idsatuan','Barang']]},
+ role:{t:'Role',col:'#7c3aed',pk:'idrole',
+  f:[{k:'nama_role',l:'Nama Role',max:100,r:1}],
+  c:[['ID',r=>r.idrole],['Nama Role',r=>r.nama_role]],dep:[['user','idrole','User']]},
+ user:{t:'User',col:'#db2777',pk:'iduser',
+  f:[{k:'username',l:'Username',max:45,r:1},{k:'password',l:'Password',pw:1,max:100},{k:'idrole',l:'Role',s:roleOpt,n:1,r:1}],
+  c:[['ID',r=>r.iduser],['Username',r=>r.username],['Role',r=>look('role','idrole',r.idrole,'nama_role')]],
+  flt:['Role',r=>look('role','idrole',r.idrole,'nama_role')],
+  dep:[['margin_penjualan','iduser','Margin Penjualan']],uniq:'username'},
+ vendor:{t:'Vendor',col:'#d97706',pk:'idvendor',
+  f:[{k:'nama_vendor',l:'Nama Vendor',max:100,r:1},{k:'badan_hukum',l:'Badan Hukum',s:()=>[['P','PT'],['C','CV'],['U','UD/Perorangan']],d:'P'},{k:'status',l:'Status',s:()=>[['A','Aktif'],['N','Nonaktif']],d:'A'}],
+  c:[['ID',r=>r.idvendor],['Nama Vendor',r=>r.nama_vendor],['Badan Hukum',r=>BH[r.badan_hukum]||r.badan_hukum],['Status',r=>bdg(r.status=='A')]],
+  flt:['Status',r=>r.status=='A'?'Aktif':'Nonaktif'],dep:[]},
+ barang:{t:'Barang',col:'#059669',pk:'idbarang',
+  f:[{k:'nama',l:'Nama',max:45,r:1},{k:'jenis',l:'Jenis',s:()=>[['B','Baru'],['S','Bekas']],d:'B'},{k:'idsatuan',l:'Satuan',s:satOpt,n:1,r:1},{k:'harga',l:'Harga (juta rupiah)',num:1,r:1},{k:'status',l:'Status',s:()=>stSel,n:1,d:1}],
+  c:[['ID',r=>r.idbarang],['Nama',r=>r.nama],['Jenis',r=>r.jenis=='B'?'Baru':'Bekas'],['Satuan',r=>look('satuan','idsatuan',r.idsatuan,'nama_satuan')],['Harga',r=>rp(r.harga)],['Status',r=>bdg(r.status==1)]],
+  flt:['Status',r=>r.status==1?'Aktif':'Nonaktif'],dep:[]},
+ margin_penjualan:{t:'Margin Penjualan',col:'#0891b2',pk:'idmargin_penjualan',
+  f:[{k:'persen',l:'Persen (%)',num:1,r:1,step:'any'},{k:'iduser',l:'User',s:userOpt,n:1,r:1},{k:'status',l:'Status',s:()=>stSel,n:1,d:0}],
+  c:[['ID',r=>r.idmargin_penjualan],['Persen',r=>r.persen+'%'],['Status',r=>bdg(r.status==1)],['User',r=>look('user','iduser',r.iduser,'username')],['Dibuat',r=>r.created_at],['Diubah',r=>r.updated_at]],
+  flt:['Status',r=>r.status==1?'Aktif':'Nonaktif'],dep:[],margin:1}
+};
+
+let cur='satuan',fv='Semua',editing=null;
+
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1800)}
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function renderTabs(){
+ $('#tabs').innerHTML=Object.keys(E).map(k=>`<button class="nav ${k==cur?'on':''}" data-t="${k}" style="--c:${E[k].col}"><i class="dot"></i><span class="nm">${E[k].t}<small>v_${k}</small></span><em>${db[k].length}</em></button>`).join('');
+ $('#tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{cur=b.dataset.t;fv='Semua';$('#q').value='';render()});
+}
+function renderFlt(){
+ const e=E[cur];
+ if(!e.flt){$('#flt').innerHTML='';return}
+ const vals=['Semua',...new Set(db[cur].map(e.flt[1]))];
+ $('#flt').innerHTML=vals.map(v=>`<button class="pill ${v==fv?'on':''}" data-v="${esc(v)}">${esc(v)}</button>`).join('');
+ $('#flt').querySelectorAll('button').forEach(b=>b.onclick=()=>{fv=b.dataset.v;render()});
+}
+function render(){
+ const e=E[cur];
+ document.documentElement.style.setProperty('--ac',e.col);
+ $('#vt').textContent='Data '+e.t;
+ $('#vn').textContent='View: v_'+cur;
+ renderTabs();renderFlt();
+ const q=$('#q').value.toLowerCase();
+ let rows=db[cur].filter(r=>(fv=='Semua'||!e.flt||e.flt[1](r)==fv)&&(!q||e.c.some(c=>String(c[1](r)).replace(/<[^>]+>/g,'').toLowerCase().includes(q))));
+ $('#th').innerHTML='<tr>'+e.c.map(c=>`<th>${c[0]}</th>`).join('')+'<th></th></tr>';
+ $('#tb').innerHTML=rows.length?rows.map(r=>{
+  const id=r[e.pk];
+  return '<tr>'+e.c.map(c=>`<td>${c[0]=='Status'||c[0]=='Harga'?c[1](r):esc(c[1](r)).replace(/&lt;(\/?span[^&]*)&gt;/g,'<$1>')}</td>`).join('')+
+  `<td><div class="act">${e.margin&&r.status!=1?`<button class="btn g s" data-a="on" data-id="${id}">Aktifkan</button>`:''}<button class="btn g s" data-a="ed" data-id="${id}">Edit</button><button class="btn d s" data-a="del" data-id="${id}">Hapus</button></div></td></tr>`}).join('')
+  :`<tr><td class="empty" colspan="${e.c.length+1}">Tidak ada data</td></tr>`;
+ $('#cnt').textContent=rows.length+' dari '+db[cur].length+' data';
+ $('#tb').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  const id=+b.dataset.id,a=b.dataset.a;
+  if(a=='ed')openForm(id);else if(a=='del')openDel(id);else activate(id);
+ });
+}
+
+function activate(id){
+ db.margin_penjualan.forEach(m=>{m.status=m.idmargin_penjualan==id?1:0;m.updated_at=now()});
+ save();render();toast('Margin aktif diganti');
+}
+
+function openModal(h){$('#md').innerHTML=h;$('#ov').hidden=false}
+function closeModal(){$('#ov').hidden=true;editing=null}
+$('#ov').onclick=e=>{if(e.target.id=='ov')closeModal()};
+
+function openForm(id){
+ const e=E[cur];editing=id||null;
+ const row=id?db[cur].find(r=>r[e.pk]==id):{};
+ const fields=e.f.map(f=>{
+  let v=id?row[f.k]:(f.d!==undefined?f.d:'');
+  if(f.pw&&id)v='';
+  let inp;
+  if(f.s)inp=`<select id="f_${f.k}">${f.s().map(o=>`<option value="${esc(o[0])}" ${o[0]==v?'selected':''}>${esc(o[1])}</option>`).join('')}</select>`;
+  else inp=`<input id="f_${f.k}" type="${f.pw?'password':f.num?'number':'text'}" ${f.step?`step="${f.step}"`:''} ${f.max?`maxlength="${f.max}"`:''} value="${esc(v)}" ${f.pw&&id?'placeholder="Kosongkan jika tidak diubah"':''}>`;
+  return `<div class="fld"><label>${f.l}${f.r||(f.pw&&!id)?' *':''}</label>${inp}</div>`}).join('');
+ openModal(`<h3>${id?'Edit':'Tambah'} ${e.t}</h3>${fields}<div class="err" id="err"></div><div class="ft"><button class="btn g" id="cx">Batal</button><button class="btn" id="sv">Simpan</button></div>`);
+ $('#cx').onclick=closeModal;$('#sv').onclick=submit;
+}
+
+function submit(){
+ const e=E[cur],o={};
+ for(const f of e.f){
+  let v=$('#f_'+f.k).value.trim();
+  if(f.pw&&editing&&!v)continue;
+  if((f.r||(f.pw&&!editing))&&v===''){$('#err').textContent=f.l+' wajib diisi';return}
+  if(f.num){if(isNaN(+v)||+v<0){$('#err').textContent=f.l+' tidak valid';return}v=+v}
+  else if(f.n)v=+v;
+  o[f.k]=v;
+ }
+ if(e.uniq&&db[cur].some(r=>r[e.uniq].toLowerCase()==o[e.uniq].toLowerCase()&&r[e.pk]!=editing)){$('#err').textContent=e.uniq+' sudah dipakai';return}
+ if(editing){
+  const r=db[cur].find(x=>x[e.pk]==editing);Object.assign(r,o);
+  if(e.margin)r.updated_at=now();
+ }else{
+  o[e.pk]=db[cur].reduce((m,r)=>Math.max(m,r[e.pk]),0)+1;
+  if(e.margin){o.created_at=o.updated_at=now()}
+  db[cur].push(o);
+ }
+ if(e.margin&&o.status==1){const id=editing||o[e.pk];db.margin_penjualan.forEach(m=>{if(m.idmargin_penjualan!=id)m.status=0})}
+ save();closeModal();render();toast('Data tersimpan');
+}
+
+function openDel(id){
+ const e=E[cur];
+ const used=e.dep.find(d=>db[d[0]].some(r=>r[d[1]]==id));
+ if(used){
+  openModal(`<h3>Tidak dapat dihapus</h3><div>Data masih dipakai oleh tabel <b>${used[2]}</b>.</div><div class="ft"><button class="btn" id="cx">Tutup</button></div>`);
+  $('#cx').onclick=closeModal;return;
+ }
+ openModal(`<h3>Hapus ${e.t}?</h3><div>Data dengan ID <b>${id}</b> akan dihapus permanen.</div><div class="ft"><button class="btn g" id="cx">Batal</button><button class="btn d" id="ok">Hapus</button></div>`);
+ $('#cx').onclick=closeModal;
+ $('#ok').onclick=()=>{db[cur]=db[cur].filter(r=>r[e.pk]!=id);save();closeModal();render();toast('Data dihapus')};
+}
+
+$('#add').onclick=()=>openForm();
+$('#q').oninput=render;
+$('#rst').onclick=()=>{
+ openModal(`<h3>Reset Data?</h3><div>Semua data dikembalikan ke kondisi awal DML.</div><div class="ft"><button class="btn g" id="cx">Batal</button><button class="btn d" id="ok">Reset</button></div>`);
+ $('#cx').onclick=closeModal;
+ $('#ok').onclick=()=>{db=JSON.parse(JSON.stringify(SEED));save();closeModal();render();toast('Data direset')};
+};
+document.addEventListener('keydown',e=>{if(e.key=='Escape')closeModal()});
+render();
+</script>
+</body>
+</html>
